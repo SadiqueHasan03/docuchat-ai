@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: docuchat
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASS:-Password#01}
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  chroma:            # only needed with the `chroma` profile
+    image: chromadb/chroma:latest
+    ports: ["8000:8000"]
+    profiles: ["chroma"]
+
+  ollama:            # only needed with the `ollama` profile
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    volumes: [ollama:/root/.ollama]
+    profiles: ["ollama"]
+
+  app:
+    build: .
+    depends_on: [postgres]
+    environment:
+      DB_HOST: postgres
+      DB_NAME: docuchat
+      DB_USER: postgres
+      DB_PASS: ${DB_PASS:-Password#01}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-openai,pgvector}
+      CHROMA_HOST: chroma
+      OLLAMA_URL: http://ollama:11434
+    ports: ["8080:8080"]
+
+volumes:
+  pgdata:
+  ollama:
