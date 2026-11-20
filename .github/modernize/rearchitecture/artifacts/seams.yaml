@@ -1,0 +1,41 @@
+seams:
+  - id: "src/main/java/com/docuchat/web/DocumentController.java:18"
+    description: "The new React workspace calls the existing Spring document and chat APIs; server implementations stay unchanged."
+    source: inferred
+    cut_between:
+      migrated_side: workspace-page
+      frozen_side: documents-api
+    protocol_shift: null
+    frozen_side_rule: "documents-api MUST NOT be refactored as part of this frontend implementation."
+    bridge_points:
+      - at: "frontend/src/api.js document request helpers"
+        from_form: "Browser file selection, list refresh, and document deletion actions"
+        to_form: "Bearer-authenticated REST requests and multipart upload"
+        mapping_rule: "Map selected File to FormData field `file`; map DocumentSummary[] to library rows; issue DELETE and remove the row only after success."
+        edge_cases:
+          - "401 must be shown as an authentication error; never retry with an unsigned or fabricated identity."
+          - "Do not set multipart Content-Type manually; the browser supplies the boundary."
+        idempotency_retry: "A successful duplicate upload is represented by the server's 200 response; refresh the list after upload completes."
+        fallback: "Surface RFC 7807 detail/code to the user and retain the prior document list on request failure."
+        must_preserve: true
+
+  - id: "src/main/java/com/docuchat/web/ChatController.java:14"
+    description: "The new React workspace consumes the existing POST-based SSE chat API and its final source metadata event."
+    source: inferred
+    cut_between:
+      migrated_side: workspace-page
+      frozen_side: chat-api
+    protocol_shift: null
+    frozen_side_rule: "chat-api MUST NOT be refactored as part of this frontend implementation."
+    bridge_points:
+      - at: "frontend/src/api.js streamChat"
+        from_form: "Chat composer text and selected document IDs"
+        to_form: "Bearer-authenticated ChatRequest JSON over fetch; SSE token chunks plus final metadata"
+        mapping_rule: "Send conversationId and question, include documentIds only when selected, append each token event to the answer, and attach metadata.sources after the final metadata event."
+        edge_cases:
+          - "The stream is a POST and uses Authorization, so native EventSource is not suitable."
+          - "Ignore no valid token event; surface malformed event payloads as an explicit error."
+          - "An empty selection omits documentIds and uses the API's authenticated-user-wide retrieval."
+        idempotency_retry: "Do not automatically retry chat writes; the user may explicitly resubmit after an error."
+        fallback: "Keep partial text visible and show the request/stream error; do not fabricate citations."
+        must_preserve: true

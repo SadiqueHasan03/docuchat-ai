@@ -23,13 +23,22 @@ A Postgres instance is always required (document registry), even with Chroma.
 
 ## Auth
 
-All endpoints except `/actuator/health` and `/actuator/prometheus` need a Bearer JWT signed HS256 with
-`JWT_SECRET`; the `sub` claim is the tenant `user_id` (NFR-SEC-01). Swap in an OIDC issuer for production.
+Register with `POST /api/v1/auth/register` using a valid email and a password of at least 12 characters.
+Registration creates the account and returns a Bearer token; `POST /api/v1/auth/login` accepts the
+same email/password pair. Tokens use HS256, contain the account UUID as `sub`, and expire after 15
+minutes. Passwords are stored as BCrypt hashes. All document and chat endpoints still require a
+valid Bearer token; the `sub` claim remains the tenant `user_id` (NFR-SEC-01).
+
+Set `JWT_SECRET` to at least 32 bytes of random data before starting the backend. Generate one with
+`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`. The server refuses to
+start with an empty or too-short signing key.
 
 ## API
 
 | Verb | Path | Notes |
 |------|------|-------|
+| POST | `/api/v1/auth/register` | public signup; email + password (min 12 characters); returns access token |
+| POST | `/api/v1/auth/login` | public login; returns access token |
 | POST | `/api/v1/documents/upload` | multipart `file`, `forceReindex`; 201 new, 200 deduplicated |
 | GET | `/api/v1/documents` | caller's documents |
 | DELETE | `/api/v1/documents/{id}` | removes vectors + registry row |
@@ -37,6 +46,23 @@ All endpoints except `/actuator/health` and `/actuator/prometheus` need a Bearer
 | POST | `/api/v1/chat/stream` | SSE: `token` events then one `metadata` event with citations |
 
 Errors are RFC 7807 Problem Details with a `code` field (`ERR_EMPTY_FILE`, `ERR_FILE_TOO_LARGE`, ...).
+
+## Frontend
+
+The React/Vite client is in `frontend/`. It provides document upload and management, chat with
+page-level citations, and a Three.js ambient scene.
+
+```bash
+cd frontend
+npm install
+npm run dev
+npm run build
+```
+
+The dev server proxies `/api` to `http://localhost:8080`; start the backend separately. The frontend
+currently accepts a bearer token in settings; account registration and login are available from the
+backend API. For a separately hosted frontend, set `VITE_API_BASE_URL` to the backend origin and
+configure the backend to allow that origin. The production bundle is written to `frontend/dist/`.
 
 ## Known deviations from the SRS
 

@@ -1,0 +1,31 @@
+unit: chat-api
+side_effects:
+  - source_loc: "src/main/java/com/docuchat/service/ChatService.java:160"
+    effect: "Uses per-user, per-conversation in-memory chat history for the configured message window."
+    must_preserve: true
+branches:
+  - source_loc: "src/main/java/com/docuchat/service/ChatService.java:127"
+    condition: "documentIds is absent or empty."
+    behavior: "Retrieve from all indexed chunks for the authenticated user; otherwise constrain retrieval to the supplied document IDs and that user."
+    must_preserve: true
+  -   source_loc: "src/main/java/com/docuchat/service/ChatService.java:148"
+    condition: "No relevant context is found."
+    behavior: "Respond exactly that the answer cannot be found in uploaded documents."
+    must_preserve: true
+  - source_loc: "src/main/java/com/docuchat/service/ChatService.java:101"
+    condition: "The stream completes successfully."
+    behavior: "Emit answer token events followed by one metadata event containing conversationId and source citations."
+    must_preserve: true
+error_paths:
+  - source_loc: "src/main/java/com/docuchat/service/ChatService.java:121"
+    trigger: "The question is null or blank."
+    outcome: "Reject the request with an API exception."
+    contract: "ERR_EMPTY_FILE is the current code returned for this validation path."
+    must_preserve: true
+  - source_loc: "src/main/java/com/docuchat/service/ChatService.java:203"
+    trigger: "Vector store, LLM, or embedding provider fails."
+    outcome: "Map recognized provider/vector failures to the corresponding API exception; stream failures remain stream errors."
+    contract: "RFC 7807 Problem Details before stream start; application/json chat uses the stable error code."
+    must_preserve: true
+concurrency:
+  model: reactive

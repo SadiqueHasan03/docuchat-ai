@@ -1,0 +1,73 @@
+units:
+  - name: documents-api
+    trigger: api
+    trigger_detail: "GET /api/v1/documents, POST /api/v1/documents/upload, DELETE /api/v1/documents/{id}"
+    source_anchors:
+      - path: src/main/java/com/docuchat/web/DocumentController.java
+        line: 18
+      - path: src/main/java/com/docuchat/service/DocumentIngestionService.java
+        line: 68
+      - path: src/main/java/com/docuchat/service/DocumentService.java
+        line: 27
+    exported_signature:
+      - method: "List<DocumentSummary> DocumentController.list()"
+        source_loc: "src/main/java/com/docuchat/web/DocumentController.java:37"
+        stability: frozen
+      - method: "ResponseEntity<UploadResponse> DocumentController.upload(MultipartFile, boolean)"
+        source_loc: "src/main/java/com/docuchat/web/DocumentController.java:29"
+        stability: frozen
+      - method: "DeleteResponse DocumentController.delete(UUID)"
+        source_loc: "src/main/java/com/docuchat/web/DocumentController.java:42"
+        stability: frozen
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: current-user-context
+        used_fields:
+          - id()
+
+  - name: chat-api
+    trigger: api
+    trigger_detail: "POST /api/v1/chat and POST /api/v1/chat/stream"
+    source_anchors:
+      - path: src/main/java/com/docuchat/web/ChatController.java
+        line: 14
+      - path: src/main/java/com/docuchat/service/ChatService.java
+        line: 80
+      - path: src/main/java/com/docuchat/config/AiConfig.java
+        line: 35
+    exported_signature:
+      - method: "ChatAnswer ChatController.chat(ChatRequest)"
+        source_loc: "src/main/java/com/docuchat/web/ChatController.java:23"
+        stability: frozen
+      - method: "Flux<ServerSentEvent<Object>> ChatController.stream(ChatRequest)"
+        source_loc: "src/main/java/com/docuchat/web/ChatController.java:28"
+        stability: frozen
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs:
+      - module: current-user-context
+        used_fields:
+          - id()
+
+  - name: workspace-page
+    trigger: page
+    trigger_detail: "React workspace at /"
+    source_anchors:
+      - path: frontend/index.html
+      - path: frontend/src/main.jsx
+        line: 1
+      - path: frontend/src/App.jsx
+        line: 1
+      - path: frontend/src/api.js
+        line: 1
+      - path: frontend/src/ThreeScene.jsx
+        line: 1
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on:
+      - unit: documents-api
+        via: "Bearer-authenticated REST requests to upload, list, and delete documents"
+      - unit: chat-api
+        via: "Bearer-authenticated POST request with streamed token and citation events"
+    shared_refs: []

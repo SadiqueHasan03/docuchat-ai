@@ -1,0 +1,33 @@
+unit: documents-api
+bindings:
+  - type: route-declaration
+    name: "GET /api/v1/documents"
+    source_loc: "src/main/java/com/docuchat/web/DocumentController.java:37"
+    target: "DocumentController.list"
+    must_appear_in_target: true
+    notes: "Returns authenticated user's documents ordered newest first."
+  - type: route-declaration
+    name: "POST /api/v1/documents/upload"
+    source_loc: "src/main/java/com/docuchat/web/DocumentController.java:29"
+    target: "DocumentController.upload"
+    must_appear_in_target: true
+    notes: "Multipart file part; optional forceReindex query parameter; synchronous indexing."
+  - type: route-declaration
+    name: "DELETE /api/v1/documents/{id}"
+    source_loc: "src/main/java/com/docuchat/web/DocumentController.java:42"
+    target: "DocumentController.delete"
+    must_appear_in_target: true
+    notes: "UUID path parameter; owner is derived from the validated JWT."
+  - type: filter
+    name: "Stateless bearer JWT resource-server security"
+    source_loc: "src/main/java/com/docuchat/config/SecurityConfig.java:20"
+    target: "All document routes"
+    must_appear_in_target: true
+    notes: "Only actuator health and Prometheus routes are public."
+runtime_config:
+  - key: "docuchat.ingestion.max-file-size"
+    source_loc: "src/main/resources/application.yml:51"
+    source: properties-file
+    default_value: "50MB"
+    must_appear_in_target: true
+    notes: "Upload size limit; servlet multipart request limit is separately configured."

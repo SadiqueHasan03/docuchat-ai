@@ -1,0 +1,33 @@
+unit: workspace-page
+bindings:
+  - type: route-declaration
+    name: "React workspace page at /"
+    source_loc: "frontend/src/main.jsx:12"
+    target: "App"
+    must_appear_in_target: true
+    notes: "Vite loads the React root from frontend/index.html."
+  - type: convention
+    name: "Vite local API proxy"
+    source_loc: "frontend/vite.config.js:5"
+    target: "Browser fetch requests to /api and /actuator"
+    must_appear_in_target: true
+    notes: "Proxies to localhost:8080 to avoid cross-origin development requests."
+  - type: convention
+    name: "Three.js ambient scene"
+    source_loc: "frontend/src/ThreeScene.jsx:4"
+    target: "Workspace page background"
+    must_appear_in_target: true
+    notes: "Direct Three.js renderer; reduced-motion users receive a static scene."
+runtime_config:
+  - key: "VITE_API_BASE_URL"
+    source_loc: "frontend/src/api.js:1"
+    source: env
+    default_value: "same-origin"
+    must_appear_in_target: true
+    notes: "When set, requests use the configured API origin; a separate origin needs backend CORS."
+  - key: "Bearer token"
+    source_loc: "frontend/src/App.jsx:188"
+    source: code
+    default_value: "empty"
+    must_appear_in_target: true
+    notes: "Externally issued token is entered by the user, held only in React memory, and sent in Authorization headers."

@@ -1,0 +1,14 @@
+modules:
+  - name: current-user-context
+    kind: utility
+    source_loc: "src/main/java/com/docuchat/config/CurrentUser.java:10"
+    used_by_units:
+      - documents-api
+      - chat-api
+    fields:
+      - name: "id()"
+        type: "String"
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Returns the validated JWT subject from Spring Security context; frontend must not supply a user_id."

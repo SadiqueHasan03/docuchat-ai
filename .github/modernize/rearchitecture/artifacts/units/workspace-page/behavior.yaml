@@ -1,0 +1,41 @@
+unit: workspace-page
+side_effects:
+  - source_loc: "frontend/src/App.jsx:252"
+    effect: "After successful upload, refresh the document list and show the library."
+    must_preserve: true
+  - source_loc: "frontend/src/App.jsx:265"
+    effect: "After confirmed deletion, remove the document from the local list and selection."
+    must_preserve: true
+  - source_loc: "frontend/src/App.jsx:318"
+    effect: "Send each streamed answer token to the visible assistant message and attach final source metadata."
+    must_preserve: true
+branches:
+  - source_loc: "frontend/src/App.jsx:290"
+    condition: "No bearer token has been entered."
+    behavior: "Keep chat and document data locked behind a connect prompt; never fabricate or sign a token."
+    must_preserve: true
+  - source_loc: "frontend/src/App.jsx:314"
+    condition: "No document IDs are selected."
+    behavior: "Omit documentIds so the API searches all documents for the authenticated user."
+    must_preserve: true
+  - source_loc: "frontend/src/App.jsx:314"
+    condition: "One or more document IDs are selected."
+    behavior: "Send selected IDs so retrieval is restricted to those sources."
+    must_preserve: true
+  -   source_loc: "frontend/src/ThreeScene.jsx:87"
+    condition: "The user prefers reduced motion."
+    behavior: "Render a static ambient scene without requesting animation frames."
+    must_preserve: true
+error_paths:
+  - source_loc: "frontend/src/api.js:3"
+    trigger: "A backend request fails or returns RFC 7807 Problem Details."
+    outcome: "Display the server detail/code in the workspace; retain existing document rows on list-refresh failure."
+    contract: "401 receives an explicit invalid/expired-token message; other errors preserve server detail."
+    must_preserve: true
+  - source_loc: "frontend/src/api.js:68"
+    trigger: "The SSE response contains malformed JSON or stream reading fails."
+    outcome: "Show an explicit chat error and preserve partial response text without inventing citations."
+    contract: "Citation sources come only from the final metadata event."
+    must_preserve: true
+concurrency:
+  model: async

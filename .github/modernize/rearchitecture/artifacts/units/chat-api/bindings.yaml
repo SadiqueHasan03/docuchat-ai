@@ -1,0 +1,45 @@
+unit: chat-api
+bindings:
+  - type: route-declaration
+    name: "POST /api/v1/chat"
+    source_loc: "src/main/java/com/docuchat/web/ChatController.java:23"
+    target: "ChatController.chat"
+    must_appear_in_target: true
+    notes: "Validates ChatRequest JSON and returns a ChatAnswer JSON payload."
+  - type: route-declaration
+    name: "POST /api/v1/chat/stream"
+    source_loc: "src/main/java/com/docuchat/web/ChatController.java:28"
+    target: "ChatController.stream"
+    must_appear_in_target: true
+    notes: "Returns token and final metadata events using text/event-stream."
+  - type: filter
+    name: "Stateless bearer JWT resource-server security"
+    source_loc: "src/main/java/com/docuchat/config/SecurityConfig.java:20"
+    target: "All chat routes"
+    must_appear_in_target: true
+    notes: "User identity for the mandatory retrieval filter comes from the JWT subject."
+  - type: di-registration
+    name: "MessageWindowChatMemory"
+    source_loc: "src/main/java/com/docuchat/config/AiConfig.java:35"
+    target: "ChatService"
+    must_appear_in_target: true
+    notes: "In-memory chat history bounded by docuchat.rag.memory-window."
+runtime_config:
+  - key: "docuchat.rag.default-top-k"
+    source_loc: "src/main/resources/application.yml:57"
+    source: properties-file
+    default_value: "5"
+    must_appear_in_target: true
+    notes: "Default number of retrieved chunks."
+  - key: "docuchat.rag.max-top-k"
+    source_loc: "src/main/resources/application.yml:58"
+    source: properties-file
+    default_value: "20"
+    must_appear_in_target: true
+    notes: "Maximum number of retrieved chunks."
+  - key: "docuchat.rag.similarity-threshold"
+    source_loc: "src/main/resources/application.yml:59"
+    source: properties-file
+    default_value: "0.70"
+    must_appear_in_target: true
+    notes: "Default vector similarity threshold."

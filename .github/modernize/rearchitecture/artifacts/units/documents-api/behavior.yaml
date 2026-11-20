@@ -1,0 +1,36 @@
+unit: documents-api
+side_effects:
+  - source_loc: "src/main/java/com/docuchat/service/DocumentIngestionService.java:68"
+    effect: "Validates and extracts the uploaded file, creates a tenant-owned registry row, writes vector chunks, and marks the row INDEXED."
+    must_preserve: true
+  - source_loc: "src/main/java/com/docuchat/service/DocumentIngestionService.java:92"
+    effect: "For a new per-user SHA-256 match, returns the indexed document without duplicate vector writes unless forceReindex is true."
+    must_preserve: true
+  - source_loc: "src/main/java/com/docuchat/service/DocumentIngestionService.java:129"
+    effect: "On ingestion failure, attempts to purge partial vectors and persists FAILED status with a truncated error message."
+    must_preserve: true
+  - source_loc: "src/main/java/com/docuchat/service/DocumentService.java:32"
+    effect: "Deletes matching tenant vectors before deleting the registry row; a vector-store failure leaves the row for retry."
+    must_preserve: true
+branches:
+  - source_loc: "src/main/java/com/docuchat/web/DocumentController.java:34"
+    condition: "An indexed file with the same user and SHA-256 hash exists and forceReindex is false."
+    behavior: "Return HTTP 200 for deduplicated upload; a newly indexed document returns HTTP 201."
+    must_preserve: true
+  - source_loc: "src/main/java/com/docuchat/service/DocumentIngestionService.java:71"
+    condition: "The file is missing, empty, over the configured size limit, unsupported, or invalid."
+    behavior: "Reject the upload with the corresponding API error before indexing."
+    must_preserve: true
+error_paths:
+  - source_loc: "src/main/java/com/docuchat/exception/GlobalExceptionHandler.java:20"
+    trigger: "An API validation, file-processing, missing-document, or provider error occurs."
+    outcome: "Return RFC 7807 Problem Details with a machine-readable code property."
+    contract: "HTTP status from ErrorCode; problem body includes detail and code."
+    must_preserve: true
+  - source_loc: "src/main/java/com/docuchat/service/DocumentService.java:38"
+    trigger: "Vector-store deletion fails."
+    outcome: "Surface ERR_VECTOR_STORE_DOWN and retain the registry row so the operation can be retried."
+    contract: "503 Problem Details with code ERR_VECTOR_STORE_DOWN."
+    must_preserve: true
+concurrency:
+  model: sync

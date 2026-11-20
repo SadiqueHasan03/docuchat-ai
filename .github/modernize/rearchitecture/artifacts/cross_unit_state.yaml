@@ -1,0 +1,30 @@
+flows:
+  - name: "Workspace bearer token scopes document operations"
+    medium: http-header
+    key: "Authorization: Bearer JWT"
+    writer:
+      unit: workspace-page
+      source_loc: "frontend/src/api.js:5"
+    reader:
+      unit: documents-api
+      source_loc: "src/main/java/com/docuchat/config/CurrentUser.java:10"
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "With a valid JWT, list, upload, and delete requests resolve the same subject; without a token they are rejected."
+    notes: "The frontend holds the externally issued token in memory and sends it on document requests; the backend derives tenant identity from JWT sub."
+
+  - name: "Workspace bearer token scopes chat retrieval"
+    medium: http-header
+    key: "Authorization: Bearer JWT"
+    writer:
+      unit: workspace-page
+      source_loc: "frontend/src/api.js:5"
+    reader:
+      unit: chat-api
+      source_loc: "src/main/java/com/docuchat/config/CurrentUser.java:10"
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Use the same JWT for document upload and chat; assert retrieval remains scoped to its sub claim."
+    notes: "The frontend never sends user_id in chat JSON; the backend applies its authenticated subject to the vector filter."

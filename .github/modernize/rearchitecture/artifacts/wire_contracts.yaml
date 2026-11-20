@@ -1,0 +1,85 @@
+contracts:
+  - name: "List tenant documents"
+    unit: documents-api
+    type: rest
+    stability: frozen
+    source_loc: "src/main/java/com/docuchat/web/DocumentController.java:37"
+    contract:
+      method: "GET"
+      path: "/api/v1/documents"
+      request: "No body"
+      response: "DocumentSummary[] for the authenticated JWT subject, newest first"
+      error: "RFC 7807 Problem Details with a code property"
+      auth: "Bearer JWT; user scope is derived from validated JWT sub"
+    target_contract:
+      method: "GET /api/v1/documents"
+      notes: "Frontend sends Authorization: Bearer <token>; response fields map to DocumentSummary."
+    semantic_divergence: []
+
+  - name: "Upload and index document"
+    unit: documents-api
+    type: rest
+    stability: frozen
+    source_loc: "src/main/java/com/docuchat/web/DocumentController.java:29"
+    contract:
+      method: "POST"
+      path: "/api/v1/documents/upload"
+      request: "multipart/form-data with file part and optional forceReindex query parameter"
+      response: "UploadResponse; 201 when newly indexed, 200 when content-hash deduplicated"
+      error: "RFC 7807 Problem Details with a code property; upload is synchronous"
+      auth: "Bearer JWT; document ownership is derived from JWT sub"
+    target_contract:
+      method: "POST /api/v1/documents/upload"
+      notes: "Frontend uses FormData with the file part and must not set multipart Content-Type manually."
+    semantic_divergence: []
+
+  - name: "Delete tenant document"
+    unit: documents-api
+    type: rest
+    stability: frozen
+    source_loc: "src/main/java/com/docuchat/web/DocumentController.java:42"
+    contract:
+      method: "DELETE"
+      path: "/api/v1/documents/{id}"
+      request: "UUID path parameter"
+      response: "DeleteResponse"
+      error: "RFC 7807 Problem Details; vector deletion failure retains registry row for retry"
+      auth: "Bearer JWT; ownership is checked against JWT sub"
+    target_contract:
+      method: "DELETE /api/v1/documents/{id}"
+      notes: "Frontend removes the item from its view only after a successful response."
+    semantic_divergence: []
+
+  - name: "Non-streaming chat"
+    unit: chat-api
+    type: rest
+    stability: frozen
+    source_loc: "src/main/java/com/docuchat/web/ChatController.java:23"
+    contract:
+      method: "POST"
+      path: "/api/v1/chat"
+      request: "ChatRequest: conversationId, question, optional documentIds, topK, similarityThreshold"
+      response: "ChatAnswer: conversationId, answer, sources, usage, latencyMs"
+      error: "RFC 7807 Problem Details with a code property"
+      auth: "Bearer JWT; retrieval filter is server-derived from JWT sub"
+    target_contract:
+      method: "POST /api/v1/chat"
+      notes: "Request DTO and response fields remain available even though the UI uses the stream route."
+    semantic_divergence: []
+
+  - name: "Streaming chat with citations"
+    unit: chat-api
+    type: rest
+    stability: frozen
+    source_loc: "src/main/java/com/docuchat/web/ChatController.java:28"
+    contract:
+      method: "POST"
+      path: "/api/v1/chat/stream"
+      request: "ChatRequest JSON"
+      response: "text/event-stream; token events carry {token}; one final metadata event carries conversationId and sources[]"
+      error: "RFC 7807 Problem Details before stream start; stream errors follow server event-stream behavior"
+      auth: "Bearer JWT; retrieval filter is server-derived from JWT sub"
+    target_contract:
+      method: "POST /api/v1/chat/stream"
+      notes: "Browser fetch sends Authorization and JSON headers, incrementally parses SSE, and renders final source citations."
+    semantic_divergence: []

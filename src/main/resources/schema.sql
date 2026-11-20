@@ -1,4 +1,12 @@
 -- Application document registry (SRS 4.1). The vector_store table is managed by Spring AI.
+CREATE TABLE IF NOT EXISTS app_user (
+    user_id       UUID PRIMARY KEY,
+    email         VARCHAR(254) NOT NULL,
+    password_hash VARCHAR(100) NOT NULL,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_app_user_email UNIQUE (email)
+);
+
 CREATE TABLE IF NOT EXISTS document_registry (
     document_id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id       VARCHAR(128) NOT NULL,

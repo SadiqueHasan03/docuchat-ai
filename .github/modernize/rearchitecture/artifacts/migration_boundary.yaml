@@ -1,0 +1,51 @@
+user_intent:
+  raw_request: "Analyze this project and make its frontend in React.js and Three.js."
+  inferred_acceptance:
+    - "Provide a working React frontend for the existing DocuChat document and chat APIs."
+    - "Use Three.js for a subtle ambient scene."
+    - "Preserve the current Spring API and bearer-JWT security contract."
+    - "Support upload, list, delete, streaming chat, and page-level citations."
+  cleanup_required: false
+strategy: minimal_runtime
+runtime_reachable:
+  - frontend/index.html
+  - frontend/src/main.jsx
+  - frontend/src/App.jsx
+  - frontend/src/api.js
+  - frontend/src/ThreeScene.jsx
+  - frontend/src/styles.css
+must_rewrite:
+  - path: frontend/package.json
+    reason: "Declares the new React, Three.js, and Vite application runtime."
+  - path: frontend/package-lock.json
+    reason: "Locks reproducible versions for the new frontend dependencies."
+  - path: frontend/index.html
+    reason: "Vite document entry point for the new workspace page."
+  - path: frontend/vite.config.js
+    reason: "Configures the frontend runtime and same-origin local API proxy."
+  - path: frontend/src/main.jsx
+    reason: "Mounts the React application at the runtime entry point."
+  - path: frontend/src/App.jsx
+    reason: "Implements the externally reachable chat and document workspace."
+  - path: frontend/src/api.js
+    reason: "Implements the API, bearer-token, multipart, and SSE boundary."
+  - path: frontend/src/ThreeScene.jsx
+    reason: "Implements the requested Three.js ambient visualization."
+  - path: frontend/src/styles.css
+    reason: "Implements responsive and reduced-motion frontend presentation."
+copy_as_is:
+  - src/main/java/com/docuchat/web/DocumentController.java
+  - src/main/java/com/docuchat/web/ChatController.java
+  - src/main/java/com/docuchat/service/DocumentIngestionService.java
+  - src/main/java/com/docuchat/service/DocumentService.java
+  - src/main/java/com/docuchat/service/ChatService.java
+  - src/main/java/com/docuchat/config/SecurityConfig.java
+  - src/main/java/com/docuchat/config/CurrentUser.java
+  - src/main/resources/application.yml
+legacy_allowed_to_remain: []
+defer_cleanup: []
+full_rewrite_reason: null
+implementation_rule: >
+  Implement the new frontend using the listed frontend runtime files. Keep the existing Spring API
+  and its wire, tenant-isolation, and error contracts unchanged. Do not treat source_anchors as
+  rewrite targets.
